@@ -17,6 +17,6 @@ go 1.14
 // gopkg.in/launchdarkly/go-server-sdk.v5 back to "latest" and commit the change.
 
 require (
-	gopkg.in/launchdarkly/go-sdk-common.v2 latest
-	gopkg.in/launchdarkly/go-server-sdk.v5 latest
+	gopkg.in/launchdarkly/go-sdk-common.v2 v2.4.0
+	gopkg.in/launchdarkly/go-server-sdk.v5 v5.5.0
 )

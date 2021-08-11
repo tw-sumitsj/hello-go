@@ -10,10 +10,10 @@ import (
 )
 
 // Set sdkKey to your LaunchDarkly SDK key.
-const sdkKey = ""
+const sdkKey = "sdk-8c498d63-c1b4-43cb-8423-29180cd52efc"
 
 // Set featureFlagKey to the feature flag key you want to evaluate.
-const featureFlagKey = "my-boolean-flag"
+const featureFlagKey = "test-flag"
 
 func showMessage(s string) { fmt.Printf("*** %s\n\n", s) }
 
@@ -33,16 +33,29 @@ func main() {
 
 	// Set up the user properties. This user should appear on your LaunchDarkly users dashboard
 	// soon after you run the demo.
-	user := lduser.NewUserBuilder("example-user-key").
+	userSandy := lduser.NewUserBuilder("example-user-sandy").
 		Name("Sandy").
 		Build()
 
-	flagValue, err := ldClient.BoolVariation(featureFlagKey, user, false)
-	if err != nil {
-		showMessage("error: " + err.Error())
+	for i := 0; i < 5; i++ {
+		flagValue, err := ldClient.BoolVariation(featureFlagKey, userSandy, false)
+		if err != nil {
+			showMessage("error: " + err.Error())
+		}
+		showMessage(fmt.Sprintf("%d Feature flag '%s' is %t for this user", i+1, featureFlagKey, flagValue))
 	}
 
-	showMessage(fmt.Sprintf("Feature flag '%s' is %t for this user", featureFlagKey, flagValue))
+	userJohn := lduser.NewUserBuilder("example-user-john").
+		Name("John").
+		Build()
+
+	for i := 0; i < 5; i++ {
+		flagValue, err := ldClient.BoolVariation(featureFlagKey, userJohn, false)
+		if err != nil {
+			showMessage("error: " + err.Error())
+		}
+		showMessage(fmt.Sprintf("%d Feature flag '%s' is %t for this user", i+1, featureFlagKey, flagValue))
+	}
 
 	// Here we ensure that the SDK shuts down cleanly and has a chance to deliver analytics
 	// events to LaunchDarkly before the program exits. If analytics events are not delivered,
