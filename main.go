@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
@@ -18,6 +20,9 @@ const featureFlagKey = "test-flag"
 func showMessage(s string) { fmt.Printf("*** %s\n\n", s) }
 
 func main() {
+	userName := flag.String("name", "", "User Name")
+	flag.Parse()
+
 	if sdkKey == "" {
 		showMessage("Please edit main.go to set sdkKey to your LaunchDarkly SDK key first")
 		os.Exit(1)
@@ -31,31 +36,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Set up the user properties. This user should appear on your LaunchDarkly users dashboard
-	// soon after you run the demo.
-	userSandy := lduser.NewUserBuilder("example-user-sandy").
-		Name("Sandy").
-		Build()
-
-	for i := 0; i < 5; i++ {
-		flagValue, err := ldClient.BoolVariation(featureFlagKey, userSandy, false)
-		if err != nil {
-			showMessage("error: " + err.Error())
-		}
-		showMessage(fmt.Sprintf("%d Feature flag '%s' is %t for this user", i+1, featureFlagKey, flagValue))
-	}
-
-	userJohn := lduser.NewUserBuilder("example-user-john").
-		Name("John").
-		Build()
-
-	for i := 0; i < 5; i++ {
-		flagValue, err := ldClient.BoolVariation(featureFlagKey, userJohn, false)
-		if err != nil {
-			showMessage("error: " + err.Error())
-		}
-		showMessage(fmt.Sprintf("%d Feature flag '%s' is %t for this user", i+1, featureFlagKey, flagValue))
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go printFlagValueAndUserName(ldClient, *userName, &wg)
+	wg.Wait()
 
 	// Here we ensure that the SDK shuts down cleanly and has a chance to deliver analytics
 	// events to LaunchDarkly before the program exits. If analytics events are not delivered,
@@ -63,4 +47,21 @@ func main() {
 	// normal long-running application, the SDK would continue running and events would be
 	// delivered automatically in the background.
 	ldClient.Close()
+}
+
+func printFlagValueAndUserName(ldClient *ld.LDClient, userName string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	user := lduser.NewUserBuilder("example-user-john").
+		Name(userName).
+		Build()
+
+	for i := 0; i < 60; i++ {
+		flagValue, err := ldClient.BoolVariation(featureFlagKey, user, false)
+		if err != nil {
+			showMessage("error: " + err.Error())
+		}
+		showMessage(fmt.Sprintf("Feature flag '%s' is %t for %s user", featureFlagKey, flagValue, userName))
+		time.Sleep(time.Duration(1) * time.Second)
+	}
 }
