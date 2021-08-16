@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/ldcomponents"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfiledata"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfilewatch"
 	"os"
 	"sync"
 	"time"
@@ -20,7 +23,8 @@ const featureFlagKey = "test-flag"
 func showMessage(s string) { fmt.Printf("*** %s\n\n", s) }
 
 func main() {
-	userName := flag.String("name", "", "User Name")
+	userName := flag.String("name", "default-user", "User Name")
+	environment := flag.String("env", "local", "Environment")
 	flag.Parse()
 
 	if sdkKey == "" {
@@ -28,7 +32,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	ldClient, _ := ld.MakeClient(sdkKey, 5*time.Second)
+	var ldClient *ld.LDClient
+
+	if *environment == "local" {
+		var config ld.Config
+		config.DataSource = ldfiledata.DataSource().
+			FilePaths("feature-flags.json").
+			Reloader(ldfilewatch.WatchFiles)
+		config.Events = ldcomponents.NoEvents()
+
+		ldClient, _ = ld.MakeCustomClient(sdkKey, config, 5*time.Second)
+	} else {
+		ldClient, _ = ld.MakeClient(sdkKey, 5*time.Second)
+	}
+
 	if ldClient.Initialized() {
 		showMessage("SDK successfully initialized!")
 	} else {
@@ -52,7 +69,7 @@ func main() {
 func printFlagValueAndUserName(ldClient *ld.LDClient, userName string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	user := lduser.NewUserBuilder("example-user-john").
+	user := lduser.NewUserBuilder(userName).
 		Name(userName).
 		Build()
 
