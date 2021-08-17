@@ -8,7 +8,7 @@ This demo requires Go 1.14 or higher.
 
 ## Build instructions 
 
-1. Edit `main.go` and set the value of `sdkKey` to your LaunchDarkly SDK key. If there is an existing boolean feature flag in your LaunchDarkly project that you want to evaluate, set `featureFlagKey` to the flag key.
+1. Edit `main.go` and set the value of `sdkKey` to your LaunchDarkly SDK key. If there is an existing boolean feature flag in your LaunchDarkly project that you want to evaluate, set `featureFlagKey` to the flag key. By default, it will read flags from file (local/offline mode). To read flag values from server, pass `--env` as command line arguement. e.g. `--env prod`
 
 ```go
 const sdkKey = "1234567890abcdef"
